@@ -224,7 +224,7 @@ function lobbyView(room) {
       </div>
       <aside class="panel tint-blue stack">
         <h2>Players</h2>
-        ${playersList(room.players)}
+        ${playersList(room.players, room)}
       </aside>
     </section>
   `;
@@ -356,7 +356,7 @@ function resultsPanel(room, round) {
     <section class="panel tint-yellow stack">
       <div class="phase-line">
         <h2>Verdict</h2>
-        ${room.isHost ? `<button data-action="next-round">Next</button>` : `<span class="status-badge blue">Waiting for host</span>`}
+        ${room.isHost ? `<div><button data-action="next-round">Next</button> <button class="secondary" data-action="force-next">Force next</button></div>` : `<span class="status-badge blue">Waiting for host</span>`}
       </div>
       <div class="options-list">
         ${(round.options || []).map((option) => optionCard(room, round, option, false)).join("")}
@@ -424,7 +424,7 @@ function finalView(room) {
   `;
 }
 
-function playersList(players) {
+function playersList(players, room) {
   return `<div class="player-list">
     ${players.map((player) => `
       <div class="player-row">
@@ -433,6 +433,7 @@ function playersList(players) {
         <div class="phase-line">
           ${player.host ? `<span class="host-badge">Host</span>` : ""}
           <span class="status-badge ${player.connected ? "green" : ""}">${player.connected ? "Online" : "Away"}</span>
+          ${room.isHost && !player.host ? `<button class="danger small" data-action="kick" data-target="${player.id}" title="Kick player">Kick</button>` : ""}
         </div>
       </div>
     `).join("")}
@@ -563,6 +564,15 @@ app.addEventListener("click", async (event) => {
       await roomAction("/api/flag", { targetId: button.dataset.target });
     } else if (action === "next-round") {
       await roomAction("/api/next", {});
+    } else if (action === "force-next") {
+      // Host forced progression
+      if (!confirm("Force progression to the next step for all players?")) return;
+      await roomAction("/api/force-next", {});
+    } else if (action === "kick") {
+      const target = button.dataset.target;
+      if (!target) return;
+      if (!confirm("Kick this player from the room?")) return;
+      await roomAction("/api/kick", { targetId: target });
     } else if (action === "restart") {
       stopConfetti();
       await roomAction("/api/restart", {});
