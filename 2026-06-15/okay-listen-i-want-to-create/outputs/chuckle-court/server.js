@@ -304,9 +304,7 @@ function startNormalRound(room) {
 
 function startMiniRound(room) {
   const available = minigames.filter((game) => !room.usedMinigames.includes(game.id));
-  const game = room.miniCount === 0
-    ? minigames.find((item) => item.id === "mystery-mailbag")
-    : pick(available.length ? available : minigames);
+  const game = pick(available.length ? available : minigames);
   room.usedMinigames.push(game.id);
   room.miniCount += 1;
 
@@ -854,48 +852,9 @@ const server = http.createServer(async (req, res) => {
       } else if (url.pathname === "/api/restart") {
         requireHost(room, player);
         restartRoom(room);
-+      } else if (url.pathname === "/api/kick") {
-+        requireHost(room, player);
-+        const targetId = String(body.targetId || "");
-+        if (!room.players.has(targetId)) throw httpError(404, "Player not found.");
-+        // remove player from room
-+        room.players.delete(targetId);
-+        // clean up any references to the player in rounds
-+        for (const r of room.rounds) {
-+          if (r.questions) r.questions = r.questions.filter(q => q.playerId !== targetId);
-+          if (r.answers) r.answers = r.answers.filter(a => a.playerId !== targetId);
-+          if (r.pairs) r.pairs = r.pairs.filter(p => p.questionPlayerId !== targetId && p.answerPlayerId !== targetId);
-+          if (r.votes) {
-+            for (const voterId of Object.keys(r.votes)) {
-+              if (r.votes[voterId] === targetId || voterId === targetId) delete r.votes[voterId];
-+            }
-+          }
-+          if (r.assignments) delete r.assignments[targetId];
-+        }
-+        // close SSE sockets for that player
-+        const sockets = roomSockets.get(room.code) || new Set();
-+        for (const s of Array.from(sockets)) {
-+          if (s.playerId === targetId) {
-+            try {
-+              s.res.write(`event: player-kicked\ndata: ${JSON.stringify({ playerId: targetId })}\n\n`);
-+              s.res.end();
-+            } catch (e) {}
-+            sockets.delete(s);
-+          }
-+        }
-+      } else if (url.pathname === "/api/force-next") {
-+        requireHost(room, player);
-+        const round = currentRound(room);
-+        if (!round) throw httpError(409, "No active round to force.");
-+        if (round.stage !== "results") {
-+          round.stage = "results";
-+          recomputeScores(room);
-+        } else {
-+          nextStep(room);
-+        }
-       } else {
-         throw httpError(404, "Unknown endpoint.");
-       }
+      } else {
+        throw httpError(404, "Unknown endpoint.");
+      }
 
       sendJson(res, 200, { ok: true, room: serializeRoom(room, player.id) });
       broadcast(room);
