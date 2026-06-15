@@ -16,7 +16,9 @@ const state = {
   },
   source: null,
   toast: "",
-  confettiOn: false
+  confettiOn: false,
+  // draft holds the user's in-progress textarea value so server-driven re-renders don't wipe it
+  draft: ""
 };
 
 const params = new URLSearchParams(location.search);
@@ -317,12 +319,13 @@ function stageView(room, round) {
 }
 
 function submitPanel(title, placeholder, submitted) {
+  // Use state.draft to persist in-progress text across server-driven re-renders
   return `
     <section class="panel tint-blue">
       <form class="answer-form" data-form="submit">
         <h2>${escapeHtml(title)}</h2>
         ${submitted ? `<span class="status-badge green">Submitted</span>` : ""}
-        <textarea name="text" maxlength="220" placeholder="${escapeHtml(placeholder)}" ${submitted ? "disabled" : ""}></textarea>
+        <textarea name="text" maxlength="220" placeholder="${escapeHtml(placeholder)}" ${submitted ? "disabled" : ""}>${escapeHtml(state.draft || "")}</textarea>
         <div class="actions">
           <button type="submit" ${submitted ? "disabled" : ""}>Submit</button>
           <span class="muted">Max 220 characters.</span>
@@ -453,23 +456,60 @@ function toastView() {
 }
 
 function render() {
+  // Try to preserve focus and selection for inputs/textareas inside #app so server-driven re-renders
+  // don't clobber what the user is actively typing.
+  const focused = document.activeElement;
+  let focusInfo = null;
+  if (focused && app.contains(focused) && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA')) {
+    focusInfo = {
+      field: focused.dataset ? focused.dataset.field : null,
+      name: focused.name || null,
+      start: typeof focused.selectionStart === 'number' ? focused.selectionStart : null,
+      end: typeof focused.selectionEnd === 'number' ? focused.selectionEnd : null
+    };
+  }
+
   let html = "";
   if (state.screen === "join") html = joinView();
   else if (state.screen === "room" && state.room) html = roomView(state.room);
   else html = homeView();
   app.innerHTML = html + toastView();
+
+  if (focusInfo) {
+    let selector = null;
+    if (focusInfo.field) selector = `[data-field="${focusInfo.field}"]`;
+    else if (focusInfo.name) selector = `[name="${focusInfo.name}"]`;
+    const el = selector ? app.querySelector(selector) : null;
+    if (el) {
+      el.focus();
+      try {
+        if (focusInfo.start !== null && focusInfo.end !== null) el.setSelectionRange(focusInfo.start, focusInfo.end);
+      } catch (e) {
+        // ignore if browser doesn't support setSelectionRange
+      }
+    }
+  }
 }
 
 app.addEventListener("input", (event) => {
   const field = event.target.dataset.field;
-  if (!field) return;
-  if (field === "roomCode") {
-    state.roomCode = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
-    event.target.value = state.roomCode;
+  // If the input has a named data-field (profile/name/roomCode etc), handle it normally
+  if (field) {
+    if (field === "roomCode") {
+      state.roomCode = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
+      event.target.value = state.roomCode;
+      return;
+    }
+    state.profile[field] = event.target.value;
+    saveProfile();
     return;
   }
-  state.profile[field] = event.target.value;
-  saveProfile();
+
+  // Persist textarea draft content so server push updates (EventSource) don't wipe it
+  if (event.target.name === "text") {
+    state.draft = event.target.value;
+    return;
+  }
 });
 
 app.addEventListener("click", async (event) => {
@@ -535,9 +575,14 @@ app.addEventListener("click", async (event) => {
 app.addEventListener("submit", async (event) => {
   if (event.target.dataset.form !== "submit") return;
   event.preventDefault();
-  const text = new FormData(event.target).get("text");
+  // Prefer the draft (which persists across re-renders) but fall back to the form value
+  const formText = new FormData(event.target).get("text");
+  const text = (state.draft && state.draft.length) ? state.draft : formText;
   try {
     await roomAction("/api/submit", { text });
+    // Clear the draft after a successful submit so the textarea resets
+    state.draft = "";
+    render();
   } catch (error) {
     showToast(error.message);
   }
