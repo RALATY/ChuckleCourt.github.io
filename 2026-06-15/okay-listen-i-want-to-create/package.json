@@ -1,0 +1,14 @@
+{
+  "name": "chuckle-court",
+  "version": "1.0.0",
+  "description": "A dependency-free multiplayer party game about writing questionable jokes and voting for the funniest answers.",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
