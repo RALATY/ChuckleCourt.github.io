@@ -108,12 +108,24 @@ const minigames = [
     questionSeed: () => pick(miniPrompts.mailbagSeeds)
   },
   {
-    // renamed to match the caption-clash client implementation
+    // keep the original server-side caption minigame (caption-catastrophe)
+    id: "caption-catastrophe",
+    title: "Caption Catastrophe",
+    kind: "singleAnswer",
+    anonymous: false,
+    blurb: "Write a caption for a ridiculous scene.",
+    prompt: () => `Caption this disaster: ${pick(miniPrompts.captions)}`
+  },
+  {
+    // new, photo-focused minigame that photoOnly should prefer
     id: "caption-clash",
     title: "Caption Clash",
     kind: "singleAnswer",
     anonymous: false,
-    blurb: "Write a caption for a ridiculous scene.",
+    blurb: "(Photo) Write a caption for the shown image.",
+    // For now this uses the same caption prompt seed; the client-side caption-clash
+    // static page can be used for a richer photo-based experience. This id is used
+    // so room.settings.photoOnly can prefer this minigame.
     prompt: () => `Caption this disaster: ${pick(miniPrompts.captions)}`
   },
   {
@@ -309,7 +321,7 @@ function startNormalRound(room) {
 function startMiniRound(room) {
   let game;
   if (room.settings && room.settings.photoOnly) {
-    // prefer the caption-clash minigame by id
+    // prefer the dedicated photo minigame (caption-clash)
     game = minigames.find((g) => g.id === "caption-clash") || pick(minigames);
   } else {
     const available = minigames.filter((g) => !room.usedMinigames.includes(g.id));
