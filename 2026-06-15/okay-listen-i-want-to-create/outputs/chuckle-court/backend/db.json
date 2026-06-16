@@ -2,8 +2,12 @@
   "images": [
     { "id": "p1", "url": "https://picsum.photos/id/237/800/500", "tags": ["animal","dog"], "nsfw": false, "source": "picsum" },
     { "id": "p2", "url": "https://picsum.photos/id/1025/800/500", "tags": ["landscape"], "nsfw": false, "source": "picsum" },
-    { "id": "p3", "url": "https://picsum.photos/id/1005/800/500", "tags": ["people"], "nsfw": false, "source": "picsum" }
+    { "id": "p3", "url": "https://picsum.photos/id/1005/800/500", "tags": ["people"], "nsfw": false, "source": "picsum" },
+    { "id": "imp1", "url": "https://media.pitchfork.com/photos/5de6d9674072b6000877446c/master/pass/The-Weeknd.jpg", "tags": ["music","celebrity"], "nsfw": false, "source": "external" },
+    { "id": "imp2", "url": "https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da8445ad83edcdbfc931c2f7079b", "tags": ["music","album"], "nsfw": false, "source": "external" },
+    { "id": "imp3", "url": "https://i.pinimg.com/736x/5b/dd/ef/5bddefe6854d84cf8b6cf618a2af8801.jpg", "tags": ["pin","meme"], "nsfw": false, "source": "external" }
   ],
   "captions": [],
-  "settings": {}
+  "settings": {},
+  "currentRound": null
 }
