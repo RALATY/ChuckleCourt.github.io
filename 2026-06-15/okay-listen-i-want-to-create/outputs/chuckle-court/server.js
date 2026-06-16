@@ -108,8 +108,9 @@ const minigames = [
     questionSeed: () => pick(miniPrompts.mailbagSeeds)
   },
   {
-    id: "caption-catastrophe",
-    title: "Caption Catastrophe",
+    // renamed to match the caption-clash client implementation
+    id: "caption-clash",
+    title: "Caption Clash",
     kind: "singleAnswer",
     anonymous: false,
     blurb: "Write a caption for a ridiculous scene.",
@@ -308,8 +309,8 @@ function startNormalRound(room) {
 function startMiniRound(room) {
   let game;
   if (room.settings && room.settings.photoOnly) {
-    // prefer the caption minigame by id (caption-catastrophe)
-    game = minigames.find((g) => g.id === "caption-catastrophe") || pick(minigames);
+    // prefer the caption-clash minigame by id
+    game = minigames.find((g) => g.id === "caption-clash") || pick(minigames);
   } else {
     const available = minigames.filter((g) => !room.usedMinigames.includes(g.id));
     game = pick(available.length ? available : minigames);
