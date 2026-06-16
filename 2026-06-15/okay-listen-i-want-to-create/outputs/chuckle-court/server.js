@@ -108,16 +108,16 @@ const minigames = [
     questionSeed: () => pick(miniPrompts.mailbagSeeds)
   },
   {
-    // keep the original server-side caption minigame (caption-catastrophe)
-    id: "caption-catastrophe",
-    title: "Caption Catastrophe",
+    // renamed to something clearly distinct from the photo minigame
+    id: "caption-mayhem",
+    title: "Caption Mayhem",
     kind: "singleAnswer",
     anonymous: false,
     blurb: "Write a caption for a ridiculous scene.",
     prompt: () => `Caption this disaster: ${pick(miniPrompts.captions)}`
   },
   {
-    // new, photo-focused minigame that photoOnly should prefer
+    // dedicated photo-focused minigame that photoOnly should prefer
     id: "caption-clash",
     title: "Caption Clash",
     kind: "singleAnswer",
