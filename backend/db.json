@@ -1,0 +1,9 @@
+{
+  "images": [
+    { "id": "p1", "url": "https://picsum.photos/id/237/800/500", "tags": ["animal","dog"], "nsfw": false, "source": "picsum" },
+    { "id": "p2", "url": "https://picsum.photos/id/1025/800/500", "tags": ["landscape"], "nsfw": false, "source": "picsum" },
+    { "id": "p3", "url": "https://picsum.photos/id/1005/800/500", "tags": ["people"], "nsfw": false, "source": "picsum" }
+  ],
+  "captions": [],
+  "settings": {}
+}

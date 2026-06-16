@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chuckle Court — Caption Clash</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Caption Clash — Chuckle Court</h1>
+      <p class="tagline">See the image. Write the funniest caption. Vote. Laugh.</p>
+    </header>
+
+    <section id="lobby" class="card">
+      <h2>Lobby / Host Controls</h2>
+      <label><input type="checkbox" id="hostMode" /> Host mode (treat this browser as the host)</label>
+      <div id="hostControls" class="host-only" style="display:none">
+        <label><input type="checkbox" id="alwaysCaption" /> Always caption rounds</label>
+        <label><input type="checkbox" id="allowEdgy" /> Allow edgier content (host opt-in)</label>
+        <label>Profanity threshold:
+          <select id="profanityLevel">
+            <option value="strict">Strict</option>
+            <option value="mild">Mild</option>
+            <option value="off">Off (not recommended)</option>
+          </select>
+        </label>
+        <div class="admin">
+          <h3>Admin / Image Upload (paste image URL)</h3>
+          <input id="imageUrlInput" placeholder="https://...jpg" />
+          <label><input type="checkbox" id="imageNsfw" /> Mark NSFW</label>
+          <button id="addImageBtn">Add Image</button>
+          <p class="hint">Images added here are stored in your browser (localStorage) for testing. To add images to the repo, see tools/import_images.js in the branch.</p>
+        </div>
+      </div>
+
+      <div class="players">
+        <h3>Players</h3>
+        <input id="playerNameInput" placeholder="Your name" />
+        <button id="joinBtn">Join</button>
+        <ul id="playersList"></ul>
+      </div>
+
+      <div class="start">
+        <button id="startRoundBtn">Start Caption Round</button>
+        <label>Round timer (seconds): <input id="timerInput" type="number" min="10" max="300" value="60" /></label>
+      </div>
+    </section>
+
+    <section id="round" class="card" style="display:none">
+      <h2 id="roundHeader">Caption this!</h2>
+      <div class="imageWrap"><img id="roundImage" src="" alt="meme" /></div>
+      <div id="timer">Time left: <span id="timeLeft">60</span>s</div>
+      <div id="captionForm">
+        <textarea id="captionInput" placeholder="Write your caption..." maxlength="300"></textarea>
+        <button id="submitCaptionBtn">Submit Caption</button>
+        <p id="captionStatus" class="status"></p>
+      </div>
+    </section>
+
+    <section id="voting" class="card" style="display:none">
+      <h2>Vote for the best caption</h2>
+      <ul id="captionsList"></ul>
+    </section>
+
+    <section id="result" class="card" style="display:none">
+      <h2>Round Result</h2>
+      <p id="winnerText"></p>
+      <button id="newRoundBtn">Start New Round</button>
+    </section>
+
+    <footer>
+      <p>Caption Clash — implemented in the feature/caption-clash branch. Moderation: simple client-side profanity filter + placeholder server moderation hook.</p>
+    </footer>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
