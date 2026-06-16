@@ -16,7 +16,9 @@
     <section id="lobby" class="card">
       <h2>Lobby / Host Controls</h2>
       <label><input type="checkbox" id="hostMode" /> Host mode (treat this browser as the host)</label>
-      <div id="hostControls" class="host-only" style="display:none">
+
+      <!-- Always-visible caption toggle so hosts can enable caption-only rounds without toggling host mode -->
+      <div class="always-caption">
         <label><input type="checkbox" id="alwaysCaption" /> Always caption rounds</label>
         <label><input type="checkbox" id="allowEdgy" /> Allow edgier content (host opt-in)</label>
         <label>Profanity threshold:
@@ -26,12 +28,17 @@
             <option value="off">Off (not recommended)</option>
           </select>
         </label>
+      </div>
+
+      <div id="hostControls" class="host-only" style="display:none">
         <div class="admin">
-          <h3>Admin / Image Upload (paste image URL)</h3>
+          <h3>Admin / Image Upload (paste image URL or upload file)</h3>
           <input id="imageUrlInput" placeholder="https://...jpg" />
           <label><input type="checkbox" id="imageNsfw" /> Mark NSFW</label>
-          <button id="addImageBtn">Add Image</button>
-          <p class="hint">Images added here are stored in your browser (localStorage) for testing. To add images to the repo, see tools/import_images.js in the branch.</p>
+          <button id="addImageBtn">Add Image by URL</button>
+          <p class="hint">Or upload image files directly (they will be stored in your browser for testing).</p>
+          <input id="imageFileInput" type="file" accept="image/*" multiple />
+          <div id="dropZone" class="drop-zone">Drag & drop images here</div>
         </div>
       </div>
 
@@ -71,7 +78,7 @@
     </section>
 
     <footer>
-      <p>Caption Clash — implemented in the feature/caption-clash branch. Moderation: simple client-side profanity filter + placeholder server moderation hook.</p>
+      <p>Caption Clash — part of Chuckle Court. Moderation: simple client-side profanity filter + placeholder server moderation hook.</p>
     </footer>
   </div>
   <script src="./app.js"></script>
