@@ -218,7 +218,10 @@ function createRoom(input) {
     code,
     hostId: player.id,
     players: new Map([[player.id, player]]),
-    settings: { minigamesEnabled: input.minigamesEnabled !== false },
+    settings: {
+      minigamesEnabled: input.minigamesEnabled !== false,
+      photoOnly: input.photoOnly === true || false
+    },
     phase: "lobby",
     mainRound: 0,
     totalMainRounds: 6,
@@ -303,8 +306,14 @@ function startNormalRound(room) {
 }
 
 function startMiniRound(room) {
-  const available = minigames.filter((game) => !room.usedMinigames.includes(game.id));
-  const game = pick(available.length ? available : minigames);
+  let game;
+  if (room.settings && room.settings.photoOnly) {
+    // prefer the caption minigame by id (caption-catastrophe)
+    game = minigames.find((g) => g.id === "caption-catastrophe") || pick(minigames);
+  } else {
+    const available = minigames.filter((g) => !room.usedMinigames.includes(g.id));
+    game = pick(available.length ? available : minigames);
+  }
   room.usedMinigames.push(game.id);
   room.miniCount += 1;
 
@@ -833,7 +842,12 @@ const server = http.createServer(async (req, res) => {
       } else if (url.pathname === "/api/settings") {
         requireHost(room, player);
         if (room.phase !== "lobby") throw httpError(409, "Settings can only be changed before the game starts.");
-        room.settings.minigamesEnabled = body.minigamesEnabled !== false;
+        if (typeof body.minigamesEnabled !== "undefined") {
+          room.settings.minigamesEnabled = body.minigamesEnabled !== false;
+        }
+        if (typeof body.photoOnly !== "undefined") {
+          room.settings.photoOnly = Boolean(body.photoOnly);
+        }
       } else if (url.pathname === "/api/start") {
         requireHost(room, player);
         if (room.phase !== "lobby") throw httpError(409, "This game already started.");
@@ -849,6 +863,58 @@ const server = http.createServer(async (req, res) => {
       } else if (url.pathname === "/api/next") {
         requireHost(room, player);
         nextStep(room);
+      } else if (url.pathname === "/api/force-next") {
+        requireHost(room, player);
+        const round = currentRound(room);
+        if (!round) throw httpError(409, "No active round.");
+        if (!["questioning", "answering"].includes(round.stage)) throw httpError(409, "Force-next is only allowed during the typing phase.");
+
+        // If in questioning for questionAnswer rounds, assign questions (this moves to answering)
+        if (round.kind === "questionAnswer" && round.stage === "questioning") {
+          assignQuestions(room, round);
+          sendJson(res, 200, { ok: true, room: serializeRoom(room, player.id) });
+          broadcast(room);
+          return;
+        }
+        // If in answering, go to voting
+        if (round.stage === "answering") {
+          goVoting(room, round);
+          sendJson(res, 200, { ok: true, room: serializeRoom(room, player.id) });
+          broadcast(room);
+          return;
+        }
+      } else if (url.pathname === "/api/kick") {
+        requireHost(room, player);
+        const targetId = String(body.targetId || "");
+        if (!targetId || !room.players.has(targetId)) throw httpError(404, "Player not found.");
+        // remove player
+        room.players.delete(targetId);
+        // close any SSE sockets for that player
+        const sockets = roomSockets.get(room.code) || new Set();
+        for (const s of Array.from(sockets)) {
+          if (s.playerId === targetId) {
+            try { s.res.end(); } catch (e) { /* ignore */ }
+            sockets.delete(s);
+          }
+        }
+        // remove any submissions the kicked player made in the current round(s)
+        for (const round of room.rounds) {
+          if (round.answers) {
+            round.answers = round.answers.filter(a => a.playerId !== targetId);
+          }
+          if (round.questions) round.questions = round.questions.filter(q => q.playerId !== targetId);
+          if (round.pairs) round.pairs = round.pairs.filter(p => p.answerPlayerId !== targetId && p.questionPlayerId !== targetId);
+          // remove votes by kicked player
+          if (round.votes) delete round.votes[targetId];
+        }
+        // If kicked player was host (edge-case), reassign host
+        if (room.hostId === targetId) {
+          const next = room.players.keys().next();
+          room.hostId = next.done ? null : next.value;
+        }
+        sendJson(res, 200, { ok: true, room: serializeRoom(room, player.id) });
+        broadcast(room);
+        return;
       } else if (url.pathname === "/api/restart") {
         requireHost(room, player);
         restartRoom(room);
