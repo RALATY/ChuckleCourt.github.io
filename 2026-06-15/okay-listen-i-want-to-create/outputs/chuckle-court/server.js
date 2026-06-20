@@ -354,6 +354,23 @@ function startMiniRound(room) {
     createdAt: Date.now()
   };
 
+  // If this is the photo minigame, try to load a photo from the public caption-clash images.json
+  if (game.id === "caption-clash") {
+    try {
+      const imagesPath = path.join(PUBLIC_DIR, "caption-clash", "images.json");
+      if (fs.existsSync(imagesPath)) {
+        const raw = fs.readFileSync(imagesPath, "utf8");
+        const images = JSON.parse(raw);
+        // prefer safe images (nsfw:false)
+        const candidates = images.filter((img) => !img.nsfw);
+        const pool = candidates.length ? candidates : images;
+        if (pool.length) round.photo = pool[Math.floor(Math.random() * pool.length)];
+      }
+    } catch (e) {
+      // ignore image loading errors and continue without a photo
+    }
+  }
+
   room.rounds.push(round);
   room.currentRoundId = round.id;
 }
@@ -636,6 +653,9 @@ function serializeRound(room, round, viewerId) {
     vote: round.votes ? round.votes[viewerId] || "" : "",
     results: resultsFor(round, room, viewerId)
   };
+
+  // include photo if present (for photo-based minigames)
+  base.photo = round.photo || null;
 
   if (round.kind === "questionAnswer") {
     base.myAssignment = round.assignments[viewerId] || null;
